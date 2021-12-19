@@ -1,0 +1,43 @@
+version: '1.0'
+services:
+  php:
+    image: php:8.0-fpm
+    build:
+      context: ./docker
+      dockerfile: php.Dockerfile
+    container_name: ${APP_NAME:?err}-php
+    volumes:
+      - '.:/var/www/html/example-app'
+    depends_on:
+      - db
+    networks:
+      - main-lemp
+  nginx:
+    image: nginx:latest
+    container_name: ${APP_NAME:?err}-nginx
+    ports:
+      - '80:80'
+      - '443:443'
+    links:
+      - php
+    volumes:
+      - '.:/var/www/html/example-app'
+      - './conf.d/nginx:/etc/nginx/conf.d'
+    networks:
+      - main-lemp
+  db:
+    image: mysql:latest
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - '3306:3306'
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?err}
+    volumes:
+      - ${PWD}
+    networks:
+      - main-lemp
+#Docker Networks
+networks:
+  main-lemp:
+    driver: bridge
